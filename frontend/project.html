@@ -10,20 +10,45 @@
 <body>
 
     <h1>Project Manager</h1>
-    <button onclick="window.location.href='dashboard.html'">
-    ← Back to Dashboard
-</button>
 
-<button onclick="logout()">
-    Logout
-</button>
+    <button onclick="window.location.href='dashboard.html'">
+        ← Back to Dashboard
+    </button>
+
+    <button onclick="logout()">
+        Logout
+    </button>
 
     <h2 id="projectName">Project</h2>
 
     <p id="projectDescription"></p>
-    <script>
+
+    <!-- Delete Project Button -->
+    <button onclick="deleteProject()" style="background-color: #dc3545; color: white;">
+        Delete Project
+    </button>
+
+    <h3>Tasks</h3>
+
+    <button onclick="window.location.href='add-task.html?id=' + projectId">
+        + Add Task
+    </button>
+
+    <div id="tasksList">
+        <p>Loading tasks...</p>
+    </div>
+
+
+<script>
+
+    // Get Project ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get("id");
+
+
+    // ================================
+    // LOAD PROJECT
+    // ================================
 
     async function loadProject() {
 
@@ -37,244 +62,372 @@
         document.getElementById("projectDescription").textContent = project.description;
     }
 
-    loadProject();
+
+    // ================================
+    // DELETE PROJECT
+    // ================================
+
+    async function deleteProject() {
+
+        const confirmDelete = confirm(
+            "Are you sure you want to delete this project?"
+        );
+
+        if (!confirmDelete) {
+            return;
+        }
+
+        const response = await fetch(
+            "http://127.0.0.1:5000/projects/" + projectId,
+            {
+                method: "DELETE"
+            }
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+
+            alert("Project deleted successfully");
+
+            window.location.href = "dashboard.html";
+
+        } else {
+
+            alert(data.message);
+        }
+    }
+
+
+    // ================================
+    // LOAD TASKS
+    // ================================
+
     async function loadTasks() {
 
-    const response = await fetch(
-        "http://127.0.0.1:5000/projects/" + projectId + "/tasks"
-    );
+        const response = await fetch(
+            "http://127.0.0.1:5000/projects/" + projectId + "/tasks"
+        );
 
-    const tasks = await response.json();
+        const tasks = await response.json();
 
-    const tasksList = document.getElementById("tasksList");
+        const tasksList = document.getElementById("tasksList");
 
-    tasksList.innerHTML = "";
+        tasksList.innerHTML = "";
 
-    if (tasks.length === 0) {
-        tasksList.innerHTML = "<p>No tasks added yet.</p>";
-        return;
-    }
+        if (tasks.length === 0) {
 
-    tasks.forEach(function(task) {
+            tasksList.innerHTML = "<p>No tasks added yet.</p>";
 
-        const taskDiv = document.createElement("div");
-
-        taskDiv.innerHTML = `
-            <h4>${task.title}</h4>
-            <p>${task.description}</p>
-            <label>Status:</label>
-
-<select onchange="updateTaskStatus(${task.id}, this.value)">
-    <option value="Pending" ${task.status === "Pending" ? "selected" : ""}>
-        Pending
-    </option>
-
-    <option value="In Progress" ${task.status === "In Progress" ? "selected" : ""}>
-        In Progress
-    </option>
-
-    <option value="Completed" ${task.status === "Completed" ? "selected" : ""}>
-        Completed
-    </option>
-</select>
-
-<br><br>
-
-<button onclick="window.location.href='edit-task.html?id=' + ${task.id}">
-    Edit Task
-</button>
-<button onclick="deleteTask(${task.id})">
-    Delete Task
-</button>
-
-<br><br>
-
-<label>Comment:</label>
-
-<input
-    type="text"
-    id="comment-${task.id}"
-    placeholder="Write a comment"
->
-
-<button onclick="addComment(${task.id})">
-    Add Comment
-</button>
-
-<div id="comments-${task.id}"></div>
-            <hr>
-        `;
-
-        tasksList.appendChild(taskDiv);
-        loadComments(task.id);
-    });
-}
-async function updateTaskStatus(taskId, status) {
-
-    const response = await fetch(
-        "http://127.0.0.1:5000/tasks/" + taskId,
-        {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                status: status
-            })
+            return;
         }
-    );
 
-    const data = await response.json();
 
-    if (response.ok) {
-        alert("Task status updated successfully");
-    } else {
-        alert(data.message);
+        tasks.forEach(function(task) {
+
+            const taskDiv = document.createElement("div");
+
+            taskDiv.innerHTML = `
+
+                <h4>${task.title}</h4>
+
+                <p>${task.description}</p>
+
+                <label>Status:</label>
+
+                <select onchange="updateTaskStatus(${task.id}, this.value)">
+
+                    <option value="Pending"
+                        ${task.status === "Pending" ? "selected" : ""}>
+                        Pending
+                    </option>
+
+                    <option value="In Progress"
+                        ${task.status === "In Progress" ? "selected" : ""}>
+                        In Progress
+                    </option>
+
+                    <option value="Completed"
+                        ${task.status === "Completed" ? "selected" : ""}>
+                        Completed
+                    </option>
+
+                </select>
+
+                <br><br>
+
+                <button onclick="window.location.href='edit-task.html?id=' + ${task.id}">
+                    Edit Task
+                </button>
+
+                <button onclick="deleteTask(${task.id})">
+                    Delete Task
+                </button>
+
+                <br><br>
+
+                <label>Comment:</label>
+
+                <input
+                    type="text"
+                    id="comment-${task.id}"
+                    placeholder="Write a comment"
+                >
+
+                <button onclick="addComment(${task.id})">
+                    Add Comment
+                </button>
+
+                <div id="comments-${task.id}"></div>
+
+                <hr>
+            `;
+
+            tasksList.appendChild(taskDiv);
+
+            loadComments(task.id);
+
+        });
     }
-}
-async function deleteTask(taskId) {
 
-    const confirmDelete = confirm("Are you sure you want to delete this task?");
 
-    if (!confirmDelete) {
-        return;
-    }
+    // ================================
+    // UPDATE TASK STATUS
+    // ================================
 
-    const response = await fetch(
-        "http://127.0.0.1:5000/tasks/" + taskId,
-        {
-            method: "DELETE"
+    async function updateTaskStatus(taskId, status) {
+
+        const response = await fetch(
+            "http://127.0.0.1:5000/tasks/" + taskId,
+            {
+                method: "PUT",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    status: status
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+
+            alert("Task status updated successfully");
+
+        } else {
+
+            alert(data.message);
         }
-    );
-
-    const data = await response.json();
-
-    if (response.ok) {
-        alert("Task deleted successfully");
-        loadTasks();
-    } else {
-        alert(data.message);
-    }
-}
-
-async function addComment(taskId) {
-
-    const commentInput = document.getElementById("comment-" + taskId);
-    const comment = commentInput.value.trim();
-
-    if (!comment) {
-        alert("Please enter a comment");
-        return;
     }
 
-    const userId = localStorage.getItem("user_id");
 
-    if (!userId) {
-        alert("Please login first");
-        return;
-    }
+    // ================================
+    // DELETE TASK
+    // ================================
 
-    const response = await fetch(
-        "http://127.0.0.1:5000/tasks/" + taskId + "/comments",
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                user_id: userId,
-                comment: comment
-            })
+    async function deleteTask(taskId) {
+
+        const confirmDelete = confirm(
+            "Are you sure you want to delete this task?"
+        );
+
+        if (!confirmDelete) {
+            return;
         }
-    );
 
-    const data = await response.json();
+        const response = await fetch(
+            "http://127.0.0.1:5000/tasks/" + taskId,
+            {
+                method: "DELETE"
+            }
+        );
 
-    if (response.ok) {
-        alert("Comment added successfully");
-        commentInput.value = "";
-    } else {
-        alert(data.message);
-    }
-}
+        const data = await response.json();
 
-async function loadComments(taskId) {
+        if (response.ok) {
 
-    const response = await fetch(
-        "http://127.0.0.1:5000/tasks/" + taskId + "/comments"
-    );
+            alert("Task deleted successfully");
 
-    const comments = await response.json();
+            loadTasks();
 
-    const commentsContainer =
-        document.getElementById("comments-" + taskId);
+        } else {
 
-    commentsContainer.innerHTML = "";
-
-    if (comments.length === 0) {
-        commentsContainer.innerHTML = "<p>No comments yet.</p>";
-        return;
-    }
-
-    comments.forEach(function(comment) {
-
-        const commentElement = document.createElement("p");
-
-        commentElement.innerHTML = `
-    <span>${comment.username}: ${comment.comment}</span>
-    <button onclick="deleteComment(${comment.id}, ${taskId})">
-        Delete
-    </button>
-`;
-
-        commentsContainer.appendChild(commentElement);
-    });
-}
-
-async function deleteComment(commentId, taskId) {
-
-    const confirmDelete = confirm(
-        "Are you sure you want to delete this comment?"
-    );
-
-    if (!confirmDelete) {
-        return;
-    }
-
-    const response = await fetch(
-        "http://127.0.0.1:5000/comments/" + commentId,
-        {
-            method: "DELETE"
+            alert(data.message);
         }
-    );
-
-    const data = await response.json();
-
-    if (response.ok) {
-        alert("Comment deleted successfully");
-        loadComments(taskId);
-    } else {
-        alert(data.message);
     }
-}
-loadTasks();
 
-function logout() {
-    localStorage.removeItem("username");
-    localStorage.removeItem("user_id");
 
-    window.location.href = "login.html";
-}
+    // ================================
+    // ADD COMMENT
+    // ================================
+
+    async function addComment(taskId) {
+
+        const commentInput =
+            document.getElementById("comment-" + taskId);
+
+        const comment = commentInput.value.trim();
+
+        if (!comment) {
+
+            alert("Please enter a comment");
+
+            return;
+        }
+
+        const userId = localStorage.getItem("user_id");
+
+        if (!userId) {
+
+            alert("Please login first");
+
+            return;
+        }
+
+        const response = await fetch(
+            "http://127.0.0.1:5000/tasks/" + taskId + "/comments",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    user_id: userId,
+                    comment: comment
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+
+            alert("Comment added successfully");
+
+            commentInput.value = "";
+
+            loadComments(taskId);
+
+        } else {
+
+            alert(data.message);
+        }
+    }
+
+
+    // ================================
+    // LOAD COMMENTS
+    // ================================
+
+    async function loadComments(taskId) {
+
+        const response = await fetch(
+            "http://127.0.0.1:5000/tasks/" + taskId + "/comments"
+        );
+
+        const comments = await response.json();
+
+        const commentsContainer =
+            document.getElementById("comments-" + taskId);
+
+        commentsContainer.innerHTML = "";
+
+        if (comments.length === 0) {
+
+            commentsContainer.innerHTML =
+                "<p>No comments yet.</p>";
+
+            return;
+        }
+
+
+        comments.forEach(function(comment) {
+
+            const commentElement = document.createElement("p");
+
+            commentElement.innerHTML = `
+
+                <span>
+                    ${comment.username}: ${comment.comment}
+                </span>
+
+                <button onclick="deleteComment(${comment.id}, ${taskId})">
+                    Delete
+                </button>
+
+            `;
+
+            commentsContainer.appendChild(commentElement);
+
+        });
+    }
+
+
+    // ================================
+    // DELETE COMMENT
+    // ================================
+
+    async function deleteComment(commentId, taskId) {
+
+        const confirmDelete = confirm(
+            "Are you sure you want to delete this comment?"
+        );
+
+        if (!confirmDelete) {
+            return;
+        }
+
+        const response = await fetch(
+            "http://127.0.0.1:5000/comments/" + commentId,
+            {
+                method: "DELETE"
+            }
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+
+            alert("Comment deleted successfully");
+
+            loadComments(taskId);
+
+        } else {
+
+            alert(data.message);
+        }
+    }
+
+
+    // ================================
+    // LOGOUT
+    // ================================
+
+    function logout() {
+
+        localStorage.removeItem("username");
+
+        localStorage.removeItem("user_id");
+
+        window.location.href = "login.html";
+    }
+
+
+    // ================================
+    // START
+    // ================================
+
+    loadProject();
+
+    loadTasks();
+
 </script>
-
-    <h3>Tasks</h3>
-    <button onclick="window.location.href='add-task.html?id=' + projectId">
-    + Add Task
-</button>
-
-    <div id="tasksList">
-    <p>Loading tasks...</p>
-</div>
 
 </body>
 </html>
