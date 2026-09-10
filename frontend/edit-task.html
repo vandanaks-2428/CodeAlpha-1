@@ -219,7 +219,7 @@
             try {
 
                 const response = await fetch(
-                    "http://127.0.0.1:5000/tasks/" + taskId
+                    "https://codealpha-1-gqxy.onrender.com/tasks/" + taskId
                 );
 
                 const task = await response.json();
@@ -243,7 +243,7 @@
             const description = document.getElementById("taskDescription").value;
 
             const response = await fetch(
-                "http://127.0.0.1:5000/tasks/" + taskId + "/edit",
+                "https://codealpha-1-gqxy.onrender.com/tasks/" + taskId + "/edit",
                 {
                     method: "PUT",
                     headers: {

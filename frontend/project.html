@@ -53,7 +53,7 @@
     async function loadProject() {
 
         const response = await fetch(
-            "http://127.0.0.1:5000/projects/" + projectId
+            "https://codealpha-1-gqxy.onrender.com/projects/" + projectId
         );
 
         const project = await response.json();
@@ -78,7 +78,7 @@
         }
 
         const response = await fetch(
-            "http://127.0.0.1:5000/projects/" + projectId,
+            "https://codealpha-1-gqxy.onrender.com/projects/" + projectId,
             {
                 method: "DELETE"
             }
@@ -106,7 +106,7 @@
     async function loadTasks() {
 
         const response = await fetch(
-            "http://127.0.0.1:5000/projects/" + projectId + "/tasks"
+            "https://codealpha-1-gqxy.onrender.com/projects/" + projectId + "/tasks"
         );
 
         const tasks = await response.json();
@@ -198,7 +198,7 @@
     async function updateTaskStatus(taskId, status) {
 
         const response = await fetch(
-            "http://127.0.0.1:5000/tasks/" + taskId,
+            "https://codealpha-1-gqxy.onrender.com/tasks/" + taskId,
             {
                 method: "PUT",
 
@@ -240,7 +240,7 @@
         }
 
         const response = await fetch(
-            "http://127.0.0.1:5000/tasks/" + taskId,
+            "https://codealpha-1-gqxy.onrender.com/tasks/" + taskId,
             {
                 method: "DELETE"
             }
@@ -289,7 +289,7 @@
         }
 
         const response = await fetch(
-            "http://127.0.0.1:5000/tasks/" + taskId + "/comments",
+            "https://codealpha-1-gqxy.onrender.com/tasks/" + taskId + "/comments",
             {
                 method: "POST",
 
@@ -328,7 +328,7 @@
     async function loadComments(taskId) {
 
         const response = await fetch(
-            "http://127.0.0.1:5000/tasks/" + taskId + "/comments"
+            "https://codealpha-1-gqxy.onrender.com/tasks/" + taskId + "/comments"
         );
 
         const comments = await response.json();
@@ -384,7 +384,7 @@
         }
 
         const response = await fetch(
-            "http://127.0.0.1:5000/comments/" + commentId,
+            "https://codealpha-1-gqxy.onrender.com/comments/" + commentId,
             {
                 method: "DELETE"
             }
