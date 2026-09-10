@@ -3,325 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project</title>
+    <title>Create Project</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <h1>Project Manager</h1>
+    <h1>Create Project</h1>
 
     <button onclick="window.location.href='dashboard.html'">
         ← Back to Dashboard
     </button>
 
-    <button onclick="logout()">
-        Logout
-    </button>
+    <br><br>
 
-    <h2 id="projectName">Project</h2>
+    <div class="form-container">
 
-    <p id="projectDescription"></p>
+        <label>Project Name</label>
+        <input
+            type="text"
+            id="projectName"
+            placeholder="Enter project name"
+        >
 
-    <h3>Tasks</h3>
+        <br><br>
 
-    <button onclick="window.location.href='add-task.html?id=' + projectId">
-        + Add Task
-    </button>
+        <label>Description</label>
+        <textarea
+            id="projectDescription"
+            placeholder="Enter project description"
+        ></textarea>
 
-    <div id="tasksList">
-        <p>Loading tasks...</p>
+        <br><br>
+
+        <button onclick="createProject()">
+            Create Project
+        </button>
+
     </div>
-
 
 <script>
 
 const API_URL = "https://codealpha-1-gqxy.onrender.com";
 
-const urlParams = new URLSearchParams(window.location.search);
-const projectId = urlParams.get("id");
+async function createProject() {
 
+    const name =
+        document.getElementById("projectName").value.trim();
 
-/* ================================
-   LOAD PROJECT
-================================ */
+    const description =
+        document.getElementById("projectDescription").value.trim();
 
-async function loadProject() {
+    if (!name || !description) {
 
-    try {
-
-        const response = await fetch(
-            API_URL + "/projects/" + projectId
-        );
-
-        const project = await response.json();
-
-        if (!response.ok) {
-            alert(project.message || "Unable to load project");
-            return;
-        }
-
-        document.getElementById("projectName").textContent =
-            project.name;
-
-        document.getElementById("projectDescription").textContent =
-            project.description;
-
-    } catch (error) {
-
-        console.error(error);
-
-        document.getElementById("projectName").textContent =
-            "Unable to load project";
-
-    }
-}
-
-
-/* ================================
-   LOAD TASKS
-================================ */
-
-async function loadTasks() {
-
-    try {
-
-        const response = await fetch(
-            API_URL + "/projects/" + projectId + "/tasks"
-        );
-
-        const tasks = await response.json();
-
-        const tasksList =
-            document.getElementById("tasksList");
-
-        tasksList.innerHTML = "";
-
-        if (tasks.length === 0) {
-
-            tasksList.innerHTML =
-                "<p>No tasks added yet.</p>";
-
-            return;
-        }
-
-
-        tasks.forEach(function(task) {
-
-            const taskDiv =
-                document.createElement("div");
-
-
-            taskDiv.innerHTML = `
-
-                <h4>${task.title}</h4>
-
-                <p>${task.description}</p>
-
-                <label>Status:</label>
-
-                <select
-                    onchange="updateTaskStatus(${task.id}, this.value)"
-                >
-
-                    <option value="Pending"
-                        ${task.status === "Pending" ? "selected" : ""}>
-                        Pending
-                    </option>
-
-                    <option value="In Progress"
-                        ${task.status === "In Progress" ? "selected" : ""}>
-                        In Progress
-                    </option>
-
-                    <option value="Completed"
-                        ${task.status === "Completed" ? "selected" : ""}>
-                        Completed
-                    </option>
-
-                </select>
-
-                <br><br>
-
-
-                <button
-                    onclick="window.location.href='edit-task.html?id=${task.id}'"
-                >
-                    Edit Task
-                </button>
-
-
-                <button
-                    onclick="deleteTask(${task.id})"
-                >
-                    Delete Task
-                </button>
-
-                <br><br>
-
-
-                <label>Comment:</label>
-
-                <input
-                    type="text"
-                    id="comment-${task.id}"
-                    placeholder="Write a comment"
-                >
-
-                <button
-                    onclick="addComment(${task.id})"
-                >
-                    Add Comment
-                </button>
-
-
-                <div id="comments-${task.id}">
-                    Loading comments...
-                </div>
-
-                <hr>
-            `;
-
-
-            tasksList.appendChild(taskDiv);
-
-            loadComments(task.id);
-
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        document.getElementById("tasksList").innerHTML =
-            "<p>Unable to load tasks.</p>";
-    }
-}
-
-
-/* ================================
-   UPDATE TASK STATUS
-================================ */
-
-async function updateTaskStatus(taskId, status) {
-
-    try {
-
-        const response = await fetch(
-            API_URL + "/tasks/" + taskId,
-            {
-                method: "PUT",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-                    status: status
-                })
-            }
-        );
-
-
-        const data = await response.json();
-
-
-        if (response.ok) {
-
-            alert("Task status updated successfully");
-
-        } else {
-
-            alert(data.message || "Unable to update task");
-
-        }
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert("Unable to connect to server");
-
-    }
-}
-
-
-/* ================================
-   DELETE TASK
-================================ */
-
-async function deleteTask(taskId) {
-
-    const confirmDelete =
-        confirm("Are you sure you want to delete this task?");
-
-
-    if (!confirmDelete) {
-        return;
-    }
-
-
-    try {
-
-        const response = await fetch(
-            API_URL + "/tasks/" + taskId,
-            {
-                method: "DELETE"
-            }
-        );
-
-
-        const data = await response.json();
-
-
-        if (response.ok) {
-
-            alert("Task deleted successfully");
-
-            loadTasks();
-
-        } else {
-
-            alert(data.message || "Unable to delete task");
-
-        }
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert("Unable to connect to server");
-
-    }
-}
-
-
-/* ================================
-   ADD COMMENT
-================================ */
-
-async function addComment(taskId) {
-
-    const commentInput =
-        document.getElementById("comment-" + taskId);
-
-
-    const comment =
-        commentInput.value.trim();
-
-
-    if (!comment) {
-
-        alert("Please enter a comment");
+        alert("All fields are required");
 
         return;
     }
-
 
     const userId =
         localStorage.getItem("user_id");
-
 
     if (!userId) {
 
@@ -332,11 +74,10 @@ async function addComment(taskId) {
         return;
     }
 
-
     try {
 
         const response = await fetch(
-            API_URL + "/tasks/" + taskId + "/comments",
+            API_URL + "/projects",
             {
                 method: "POST",
 
@@ -345,155 +86,28 @@ async function addComment(taskId) {
                 },
 
                 body: JSON.stringify({
-
-                    user_id: parseInt(userId),
-
-                    comment: comment
-
+                    name: name,
+                    description: description,
+                    user_id: parseInt(userId)
                 })
             }
         );
 
-
-        const data =
-            await response.json();
-
+        const data = await response.json();
 
         if (response.ok) {
 
-            alert("Comment added successfully");
+            alert("Project created successfully!");
 
-            commentInput.value = "";
-
-            loadComments(taskId);
-
-        } else {
-
-            alert(data.message || "Unable to add comment");
-
-        }
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert("Unable to connect to server");
-
-    }
-}
-
-
-/* ================================
-   LOAD COMMENTS
-================================ */
-
-async function loadComments(taskId) {
-
-    try {
-
-        const response = await fetch(
-            API_URL + "/tasks/" + taskId + "/comments"
-        );
-
-
-        const comments =
-            await response.json();
-
-
-        const commentsContainer =
-            document.getElementById("comments-" + taskId);
-
-
-        commentsContainer.innerHTML = "";
-
-
-        if (comments.length === 0) {
-
-            commentsContainer.innerHTML =
-                "<p>No comments yet.</p>";
-
-            return;
-        }
-
-
-        comments.forEach(function(comment) {
-
-            const commentElement =
-                document.createElement("p");
-
-
-            commentElement.innerHTML = `
-
-                <span>
-                    <strong>${comment.username}</strong>:
-                    ${comment.comment}
-                </span>
-
-                <button
-                    onclick="deleteComment(${comment.id}, ${taskId})"
-                >
-                    Delete
-                </button>
-
-            `;
-
-
-            commentsContainer.appendChild(
-                commentElement
-            );
-
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-    }
-}
-
-
-/* ================================
-   DELETE COMMENT
-================================ */
-
-async function deleteComment(commentId, taskId) {
-
-    const confirmDelete =
-        confirm("Are you sure you want to delete this comment?");
-
-
-    if (!confirmDelete) {
-        return;
-    }
-
-
-    try {
-
-        const response = await fetch(
-            API_URL + "/comments/" + commentId,
-            {
-                method: "DELETE"
-            }
-        );
-
-
-        const data =
-            await response.json();
-
-
-        if (response.ok) {
-
-            alert("Comment deleted successfully");
-
-            loadComments(taskId);
+            window.location.href =
+                "dashboard.html";
 
         } else {
 
             alert(
                 data.message ||
-                "Unable to delete comment"
+                "Unable to create project"
             );
-
         }
 
     } catch (error) {
@@ -501,32 +115,8 @@ async function deleteComment(commentId, taskId) {
         console.error(error);
 
         alert("Unable to connect to server");
-
     }
 }
-
-
-/* ================================
-   LOGOUT
-================================ */
-
-function logout() {
-
-    localStorage.removeItem("username");
-
-    localStorage.removeItem("user_id");
-
-    window.location.href = "login.html";
-}
-
-
-/* ================================
-   START
-================================ */
-
-loadProject();
-
-loadTasks();
 
 </script>
 
